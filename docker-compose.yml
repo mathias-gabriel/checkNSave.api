@@ -1,0 +1,63 @@
+version: '3.1'
+
+services:
+
+  mosquitto:
+      image: toke/mosquitto
+      volumes:
+        - ./mosquitto/config:/mqtt/config:ro
+        - ./mosquitto/log:/mqtt/log
+      ports:
+            - "1883:1883"
+      environment:
+        - POSTGRES_PASSWORD=docker
+        - USERNAME=docker
+        - PASS=docker
+      restart: always
+
+  db:
+    image: mdillon/postgis
+    volumes:
+      - ./pg:/var/lib/postgresql
+      - ./gisdata:/gisdata
+      # uncomment this to expose port 5432 to the host
+      # WARNING: THIS IS UNSAFE USE ONLY FOR DEV
+    environment:
+      - POSTGRES_PASSWORD=docker
+      - USERNAME=docker
+      - PASS=docker
+    restart: on-failure:5
+
+  mongo:
+    build: ./mongo
+    restart: always
+    environment:
+      - MONGO_INITDB_DATABASE=scanworld_iot
+
+  api:
+      stdin_open: true
+      tty: true
+      restart: always
+      build: ./app
+      volumes:
+        - ./conf:/root/conf
+        - ./uploads:/root/uploads
+      environment:
+        - GOOGLE_APPLICATION_CREDENTIALS=/root/secret-google-vision.json
+      depends_on:
+        - db
+        - mongo
+      ports:
+        - "5003:5003"
+      command: ['python3.6', 'root/serverAPI.py']
+
+  broker:
+    stdin_open: true
+    tty: true
+    restart: always
+    build: ./broker
+    volumes:
+      - ./broker/conf:/root/conf
+    depends_on:
+      - mongo
+    command: ['python', 'mqtt.py']
