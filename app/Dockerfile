@@ -27,6 +27,7 @@ RUN python3.6 -m pip install numpy
 RUN python3.6 -m pip install keras
 RUN python3.6 -m pip install tensorflow==1.5
 RUN python3.6 -m pip install imutils
+RUN python3.6 -m pip install geopy
 
 
 

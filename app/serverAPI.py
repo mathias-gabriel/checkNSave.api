@@ -27,6 +27,7 @@ import cv2
 from keras.models import load_model
 import numpy as np
 
+from geopy.geocoders import Nominatim
 
 app                         = Flask(__name__)
 app.config['SECRET_KEY']    = 'secret!'
@@ -150,6 +151,36 @@ def getDefibrillatteurs(lat, lng, position, limit):
         print("   ", row[0], "   ", row[1])
 
     return jsonify( defibrilatteurs )
+
+@app.route('/address/<lat>/<lng>', methods=['GET'])
+def getAddress(lat, lng):
+
+    """Example endpoint returning a list of colors by palette
+     This is using docstrings for specifications.
+     ---
+     parameters:
+       - name: lat
+         in: path
+         type: double
+
+       - name: lng
+         in: path
+         type: double
+
+     responses:
+       200:
+         description: A list of colors (may be filtered by palette)
+     """
+
+    latlng = str(lat)+" "+str(lng)
+    geolocator = Nominatim(user_agent="checknsave")
+    location = geolocator.reverse(latlng)
+
+    response = {
+        "address":location.address
+    }
+
+    return jsonify( response )
 
 
 @app.route('/messages', methods=['GET'])
