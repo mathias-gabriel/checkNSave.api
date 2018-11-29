@@ -32,7 +32,7 @@ services:
     build: ./mongo
     restart: always
     environment:
-      - MONGO_INITDB_DATABASE=scanworld_iot
+      - MONGO_INITDB_DATABASE=checkNSave
 
   api:
       stdin_open: true

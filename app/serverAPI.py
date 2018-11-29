@@ -28,6 +28,7 @@ from keras.models import load_model
 import numpy as np
 
 from geopy.geocoders import Nominatim
+import smtplib
 
 app                         = Flask(__name__)
 app.config['SECRET_KEY']    = 'secret!'
@@ -204,6 +205,42 @@ def getGeonameInText():
     return jsonify( iot_messages )
 
 
+@app.route('/send_report_by_email', methods=['POST'])
+def sendReportByEmail():
+
+    """
+    This examples uses FlaskRESTful Resource
+    It works also with swag_from, schemas and spec_dict
+       ---
+       parameters:
+        - name: body
+          in: body
+          required: true
+          schema:
+            id : report
+            required:
+              - report
+            properties:
+              report:
+                type: string
+                description: liste des films
+
+       responses:
+         200:
+           description: A single user item
+           schema:
+             message: string
+    """
+
+    if request.json:
+        data = request.json # will be
+        sendGmail(gmailSendTo, gmailLogin, gmailPassword,"report", "report !")
+        return jsonify( data )
+
+    else:
+        return "no json received"
+
+
 def getLabelGoogleVision(path):
 
     client = vision.ImageAnnotatorClient()
@@ -229,6 +266,20 @@ def getLabelGoogleVision(path):
     return results
 
 
+def sendGmail(dest, exp, pwd, subject, text):
+    body = text
+    server = smtplib.SMTP('smtp.gmail.com', 587)
+    server.ehlo()
+    server.starttls()
+    server.login(exp, pwd)
+
+    msg = '\r\n'.join(['To: {}'.format(dest), 'From: {}'.format(exp), 'Subject: {}'.format(subject), '',body])
+
+    server.sendmail(exp, dest, msg.encode('utf-8'))
+    server.quit()
+
+
+
 if __name__ == '__main__':
 
     print("chargement de la configuration:")
@@ -248,6 +299,10 @@ if __name__ == '__main__':
 
     client = MongoClient(mongoHost)
     db = client[mongoDB]
+
+    gmailLogin          = config.get('gmail', 'login')
+    gmailPassword       = config.get('gmail', 'password')
+    gmailSendTo         = config.get('gmail', 'user')
 
     detection_face_path = 'haarcascade_files/haarcascade_frontalface_default.xml'
     detection_eye_path = 'haarcascade_files/haarcascade_eye.xml'
